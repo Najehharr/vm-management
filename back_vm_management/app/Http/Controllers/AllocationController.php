@@ -12,16 +12,16 @@ class AllocationController extends Controller
 
     public function index()
 {
-    // Eager load the 'client' relationship
+
     $allocations = Allocation::with('client')->get();
 
-    // Map the allocations to include relevant data from both Allocation and Client
+
     $allocations = $allocations->map(function ($allocation) {
         return [
             'id' => $allocation->id,
             'vm_id' => $allocation->vm_id,
-            'client_cin' => $allocation->client->cin,  // Retrieve CIN from the client
-            'address' => $allocation->client->address,  // Retrieve email from the client
+            'client_cin' => $allocation->client->cin,
+            'address' => $allocation->client->address,
             'begin_date' => $allocation->begin_date,
             'end_date' => $allocation->end_date,
             'amount' => $allocation->amount,
@@ -121,20 +121,20 @@ class AllocationController extends Controller
 
     public function sendAllocationEmail(Request $request)
 {
-    // Validate incoming request
+
     $validatedData = $request->validate([
         'client_cin' => 'required|exists:clients,cin',
         'allocation.id' => 'required|exists:allocations,id',
     ]);
 
     try {
-        // Find the client using the CIN
+
         $client = Client::where('cin', $validatedData['client_cin'])->first();
         if (!$client) {
             return response()->json(['error' => 'Client not found'], 404);
         }
 
-        // Find the allocation using the provided allocation ID
+
         $allocation = Allocation::find($validatedData['allocation']['id']);
         if (!$allocation) {
             return response()->json(['error' => 'Allocation not found'], 404);
@@ -145,13 +145,13 @@ class AllocationController extends Controller
             return response()->json(['error' => 'Client email address is missing'], 400);
         }
 
-        // Sending the email
+
         Mail::to($client->address)->send(new AllocationEmail($allocation));
 
-        // Success response
+
         return response()->json(['message' => 'Email sent successfully!'], 200);
     } catch (\Exception $e) {
-        // Catch and return any errors during the process
+    
         return response()->json(['message' => 'Error sending email', 'error' => $e->getMessage()], 500);
     }
 }
